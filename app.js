@@ -196,6 +196,118 @@ const FALLBACK_IMG =
     </svg>`
   );
 
+  /* ============================================================
+   LIGHTBOX
+   ============================================================ */
+
+const lightbox = {
+  el: null,
+  img: null,
+  caption: null,
+  closeBtn: null,
+  prevBtn: null,
+  nextBtn: null,
+  photos: [],
+  index: 0,
+  title: "",
+
+  init() {
+    this.el = document.getElementById("lightbox");
+    if (!this.el) return;
+    this.img = document.getElementById("lightbox-img");
+    this.caption = document.getElementById("lightbox-caption");
+    this.closeBtn = this.el.querySelector(".lightbox__close");
+    this.prevBtn = this.el.querySelector(".lightbox__nav--prev");
+    this.nextBtn = this.el.querySelector(".lightbox__nav--next");
+
+    this.closeBtn.addEventListener("click", () => this.close());
+    this.prevBtn.addEventListener("click", (e) => { e.stopPropagation(); this.prev(); });
+    this.nextBtn.addEventListener("click", (e) => { e.stopPropagation(); this.next(); });
+
+    // клик по фону — закрыть
+    this.el.addEventListener("click", (e) => {
+      if (e.target === this.el) this.close();
+    });
+
+    // клавиатура
+    document.addEventListener("keydown", (e) => {
+      if (!this.el.classList.contains("is-open")) return;
+      if (e.key === "Escape") this.close();
+      else if (e.key === "ArrowLeft") this.prev();
+      else if (e.key === "ArrowRight") this.next();
+    });
+
+    // свайп
+    let startX = 0, startY = 0, dragging = false, moved = false;
+    this.el.addEventListener("touchstart", (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      dragging = true;
+      moved = false;
+    }, { passive: true });
+    this.el.addEventListener("touchmove", (e) => {
+      if (!dragging) return;
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) moved = true;
+    }, { passive: true });
+    this.el.addEventListener("touchend", (e) => {
+      if (!dragging) return;
+      dragging = false;
+      if (!moved) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 50) dx < 0 ? this.next() : this.prev();
+    });
+  },
+
+  open(photos, startIndex, title) {
+    if (!Array.isArray(photos) || photos.length === 0) return;
+    this.photos = photos;
+    this.title = title || "";
+    this.index = Math.min(Math.max(0, startIndex | 0), photos.length - 1);
+    document.body.classList.add("lightbox-open");
+    this.el.classList.add("is-open");
+    this.el.setAttribute("aria-hidden", "false");
+    this.render();
+    this.closeBtn.focus({ preventScroll: true });
+  },
+
+  render() {
+    this.img.src = this.photos[this.index];
+    this.img.alt = this.title
+      ? `${this.title} — фото ${this.index + 1}`
+      : `Фото ${this.index + 1}`;
+
+    const many = this.photos.length > 1;
+    this.prevBtn.hidden = !many;
+    this.nextBtn.hidden = !many;
+
+    const total = this.photos.length;
+    this.caption.textContent = many
+      ? `${this.index + 1} / ${total}${this.title ? " · " + this.title : ""}`
+      : this.title;
+  },
+
+  next() {
+    if (this.photos.length < 2) return;
+    this.index = (this.index + 1) % this.photos.length;
+    this.render();
+  },
+
+  prev() {
+    if (this.photos.length < 2) return;
+    this.index = (this.index - 1 + this.photos.length) % this.photos.length;
+    this.render();
+  },
+
+  close() {
+    this.el.classList.remove("is-open");
+    this.el.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("lightbox-open");
+    this.img.src = "";
+  },
+};
+
 function buildGallery(photos, title) {
   const gallery = document.createElement("figure");
   gallery.className = "item__photo";
@@ -206,7 +318,8 @@ function buildGallery(photos, title) {
     return gallery;
   }
 
-  // трек со слайдами
+  let suppressClick = false;
+
   const track = document.createElement("div");
   track.className = "gallery__track";
   list.forEach((src, i) => {
@@ -218,11 +331,14 @@ function buildGallery(photos, title) {
       img.removeEventListener("error", onError);
       img.src = FALLBACK_IMG;
     });
+    img.addEventListener("click", () => {
+      if (suppressClick) return;
+      lightbox.open(list, i, title);
+    });
     track.appendChild(img);
   });
   gallery.appendChild(track);
 
-  // для одного фото — простая галерея с плавным зумом
   if (list.length === 1) {
     gallery.classList.add("is-single");
     return gallery;
@@ -266,6 +382,20 @@ function buildGallery(photos, title) {
   gallery.appendChild(counter);
 
   let current = 0;
+
+  gallery.addEventListener("touchend", (e) => {
+  if (!dragging) return;
+  dragging = false;
+  if (!moved) return;
+
+  suppressClick = true;
+
+  const dx = e.changedTouches[0].clientX - startX;
+  if (Math.abs(dx) > 40) {
+    dx < 0 ? goTo(current + 1) : goTo(current - 1);
+  }
+  setTimeout(() => { suppressClick = false; }, 60);
+});
 
   function goTo(index) {
     current = (index + list.length) % list.length;
@@ -415,6 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const periodEl = document.getElementById("hero-period");
   if (periodEl) periodEl.textContent = PERIOD_LABEL;
 
+  lightbox.init();     // ← добавьте эту строку
   renderCounter();
   renderTimeline();
   observeItems();
