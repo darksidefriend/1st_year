@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Наша история</title>
+  <meta name="description" content="Таймлайн наших отношений: места, моменты и даты" />
+
+  <!-- Шрифты -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================= HERO ================= -->
+  <header class="hero">
+    <div class="hero__glow" aria-hidden="true"></div>
+
+    <div class="hero__content">
+      <p class="hero__eyebrow" id="hero-period">14 февраля 2025 — 14 февраля 2026</p>
+      <h1 class="hero__title">Наша история</h1>
+      <p class="hero__subtitle">
+        Места, моменты и мелочи, из которых сложилось наше «мы»
+      </p>
+
+      <a href="#timeline" class="hero__scroll">
+        Смотреть таймлайн
+        <span class="hero__scroll-arrow" aria-hidden="true">↓</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ================= TIMELINE ================= -->
+  <main>
+    <section class="timeline-wrap" id="timeline">
+      <div class="section-head">
+        <p class="section-head__eyebrow">Таймлайн</p>
+        <h2 class="section-head__title">Места, которые стали нашими</h2>
+      </div>
+
+      <!-- Карточки генерируются в script.js -->
+      <div class="timeline" id="timeline-list"></div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <p class="footer__text">Сделано с <span class="footer__heart">♥</span> для тебя</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
